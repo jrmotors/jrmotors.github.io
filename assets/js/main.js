@@ -510,6 +510,12 @@
     var footerInView = false;
     var parallax = !reduceMotion && !!media;
 
+    // Where the button can overlap content (no side margin), tuck it away
+    // while the user scrolls down and bring it back on scroll up.
+    var autoHideMq = window.matchMedia ? window.matchMedia('(max-width: 1399px)') : null;
+    var lastY = window.pageYOffset || 0;
+    var scrollingDown = false;
+
     function update() {
       var y = window.pageYOffset || root.scrollTop || 0;
 
@@ -519,7 +525,15 @@
         media.style.transform = 'translate3d(0,' + (y * 0.32).toFixed(1) + 'px,0)';
       }
 
-      if (fab) fab.classList.toggle('is-visible', y > heroH * 0.6 && !footerInView);
+      if (Math.abs(y - lastY) > 6) {
+        scrollingDown = y > lastY;
+        lastY = y;
+      }
+
+      if (fab) {
+        var autoHide = !!(autoHideMq && autoHideMq.matches) && scrollingDown;
+        fab.classList.toggle('is-visible', y > heroH * 0.6 && !footerInView && !autoHide);
+      }
     }
 
     var onScroll = rafThrottle(update);
