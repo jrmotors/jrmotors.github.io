@@ -104,7 +104,7 @@ PRICES: [
 **Пересборка PDF** (нужны Google Chrome и Python с `pypdf`, `pillow`, `numpy`):
 
 ```bash
-cd print && BUILD_TMP=/tmp/jr-print PYTHON=python3 ./build.sh
+cd print && PYTHON=python3 ./build.sh
 ```
 
 Цены в буклет перенесены из `config.js` вручную. Если цены поменялись, исправьте их и в `eurobooklet.html`.
