@@ -2690,6 +2690,17 @@ a.contact-list__value:hover {
   }
 }
 
+/* on a tall stacked block the skewed edge slash drifts over the title —
+   lay it along the top edge instead */
+@media (max-width: 959px) {
+  .final::after {
+    bottom: auto;
+    left: clamp(24px, 5vw, 72px);
+    width: 64px;
+    height: 6px;
+  }
+}
+
 @media (min-width: 960px) {
   .final {
     grid-template-columns: minmax(0, 1fr) auto;
