@@ -1,0 +1,235 @@
+/* ==========================================================================
+   JR Motors — PRINT brand layer
+   Shared by business-card.html and eurobooklet.html.
+
+   Mirrors the website tokens (assets/css/style.css) but is tuned for paper:
+   - Static font instances (fonts/*.woff, downloaded from Google Fonts).
+     Google serves *variable* fonts to Chrome and Skia embeds those as Type 3
+     fonts, which print preflight rejects. Static instances embed as TrueType.
+   - No hairline repeating gradients (they moiré against the halftone screen);
+     the brushed-metal feel comes from a stochastic texture (img/brushed.png).
+   - Everything in mm / pt. Layout lives on an exact-size .artboard; the
+     .sheet adds a small overscan on the right/bottom that the build crops.
+   ========================================================================== */
+
+/* 01. Fonts -------------------------------------------------------------- */
+@font-face { font-family: "Unbounded"; font-style: normal; font-weight: 400; font-display: block; src: url("fonts/Unbounded-400.woff") format("woff"); }
+@font-face { font-family: "Unbounded"; font-style: normal; font-weight: 500; font-display: block; src: url("fonts/Unbounded-500.woff") format("woff"); }
+@font-face { font-family: "Unbounded"; font-style: normal; font-weight: 600; font-display: block; src: url("fonts/Unbounded-600.woff") format("woff"); }
+@font-face { font-family: "Unbounded"; font-style: normal; font-weight: 700; font-display: block; src: url("fonts/Unbounded-700.woff") format("woff"); }
+@font-face { font-family: "Unbounded"; font-style: normal; font-weight: 800; font-display: block; src: url("fonts/Unbounded-800.woff") format("woff"); }
+@font-face { font-family: "Manrope";   font-style: normal; font-weight: 400; font-display: block; src: url("fonts/Manrope-400.woff") format("woff"); }
+@font-face { font-family: "Manrope";   font-style: normal; font-weight: 500; font-display: block; src: url("fonts/Manrope-500.woff") format("woff"); }
+@font-face { font-family: "Manrope";   font-style: normal; font-weight: 600; font-display: block; src: url("fonts/Manrope-600.woff") format("woff"); }
+@font-face { font-family: "Manrope";   font-style: normal; font-weight: 700; font-display: block; src: url("fonts/Manrope-700.woff") format("woff"); }
+@font-face { font-family: "Manrope";   font-style: normal; font-weight: 800; font-display: block; src: url("fonts/Manrope-800.woff") format("woff"); }
+
+/* 02. Tokens ------------------------------------------------------------- */
+:root {
+  /* dark surfaces (same values as the site) */
+  --ink: #0a0a0b;
+  --ink-deep: #070708;
+  --graphite: #121214;
+  --graphite-2: #1a1a1d;
+  --graphite-3: #242428;
+  --line: #2c2c31;
+  --line-2: #3e3e45;
+
+  /* text on dark */
+  --silver: #f1f1f3;
+  --silver-2: #d0d0d5;
+  --silver-3: #a9a9b1;
+
+  /* light "aluminium" paper (inside of the booklet) */
+  --paper: #f5f5f6;
+  --paper-2: #ebebee;
+  --paper-3: #dedee2;
+  --paper-line: #cdcdd3;
+  --ink-text: #111113;
+  --ink-text-2: #393940;
+  --ink-text-3: #5e5e66;
+
+  /* the one accent */
+  --red: #d60404;
+  --red-hot: #ff1a1a;
+  --red-deep: #9e0202;
+  --red-grad: linear-gradient(180deg, #e40f0f 0%, #d60404 55%, #b20303 100%);
+
+  /* brushed metal */
+  --metal: linear-gradient(180deg, #ffffff 0%, #d4d4d8 45%, #8a8a90 100%);
+  --steel: linear-gradient(180deg, #3a3a40 0%, #111113 70%);
+
+  --font-display: "Unbounded", sans-serif;
+  --font-body: "Manrope", sans-serif;
+
+  /* the parallelogram of the "R" */
+  --skew: -14deg;          /* panels, plates, photo frames  (tan = .2493) */
+  --skew-steep: -24deg;    /* small ticks & markers          (tan = .4452) */
+
+  --os: .6mm;              /* overscan past right/bottom edge, cropped by build */
+}
+
+/* 03. Base --------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--silver);
+  font-kerning: normal;
+  font-variant-numeric: lining-nums;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, p, ul, ol, li, figure, figcaption, dl, dt, dd { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+img, svg { display: block; }
+b, strong { font-weight: 800; }
+
+/* sheet = one PDF page (trim + bleed + overscan) */
+.sheet {
+  position: relative;
+  overflow: hidden;
+  width: calc(var(--sheet-w) + var(--os));
+  height: calc(var(--sheet-h) + var(--os));
+  break-after: page;
+  break-inside: avoid;
+}
+.sheet:last-of-type { break-after: auto; }
+
+/* artboard = exact page incl. bleed; all coordinates are relative to it */
+.artboard {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--sheet-w);
+  height: var(--sheet-h);
+}
+
+/* full-bleed layer that also covers the overscan */
+.fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: calc(-1 * var(--os));
+  bottom: calc(-1 * var(--os));
+}
+
+/* screen preview only: lay sheets out on a neutral desk */
+@media screen {
+  html { background: #3b3b40; }
+  body { padding: 12mm; display: grid; gap: 10mm; justify-content: center; }
+  .sheet { box-shadow: 0 2mm 10mm rgba(0, 0, 0, .5); }
+}
+
+/* 04. Primitives --------------------------------------------------------- */
+
+/* brushed-metal grain, laid over any dark surface */
+.brushed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("img/brushed.png") 0 0 / 90mm auto repeat;
+  pointer-events: none;
+}
+
+/* silver gradient type.
+   Drawn as inline SVG <text> (one element per line) filled with #g-metal.
+   CSS background-clip:text is NOT used: Chrome emits it as soft-masked
+   transparency groups, which show seams at the group bounds in RIPs/flatteners.
+   SVG text prints as real text with a vector shading fill.
+   Convention: viewBox user unit = 1 mm, so width/height are set in mm. */
+.mt {
+  display: block;
+  overflow: visible;
+  width: var(--w);
+  height: var(--h);
+}
+.mt text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  fill: url(#g-metal);
+}
+.mt.on-paper text { fill: url(#g-steel); }
+
+/* the red parallelogram */
+.para {
+  display: inline-block;
+  flex: none;
+  width: var(--pw, 3.2mm);
+  height: var(--ph, 1.3mm);
+  background: var(--red);
+  transform: skewX(var(--skew-steep));
+}
+
+/* eyebrow label with leading parallelogram */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 2.4mm;
+  font: 600 7pt/1.2 var(--font-display);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 3.4mm;
+  height: 1.4mm;
+  background: var(--red);
+  transform: skewX(var(--skew-steep));
+}
+
+/* line icons (sprite symbols inherit stroke from the <svg>) */
+.ico {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+}
+
+/* tenge sign: neither Unbounded nor Manrope has U+20B8, so it is drawn.
+   Height = cap height (.72em Manrope / .75em Unbounded), sits on the baseline. */
+.tg {
+  display: inline-block;
+  width: .6em;
+  height: .72em;
+  margin-left: .2em;
+  fill: currentColor;
+  vertical-align: baseline;
+}
+
+/* QR codes always print dark-on-white on their own tile */
+.qr {
+  background: #ffffff;
+  border-radius: 1.2mm;
+  padding: var(--qr-pad, .8mm);
+}
+.qr img { width: 100%; height: auto; }
+
+/* sprite container (must not be display:none or <use> can fail in print) */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* 05. Preview guides (only rendered with ?guides — never in the print PDF) */
+.guides { position: absolute; inset: 0; pointer-events: none; z-index: 9999; }
+.guides .g-trim { position: absolute; outline: .25mm solid #00c8ff; }
+.guides .g-safe { position: absolute; border: .2mm dashed #ff2bd6; }
+.guides .g-fold { position: absolute; top: 0; bottom: 0; width: 0; border-left: .3mm dashed #00e0ff; }
+.guides .g-tag {
+  position: absolute;
+  font: 700 5.5pt/1 var(--font-body);
+  letter-spacing: .04em;
+  color: #00e0ff;
+  background: rgba(0, 0, 0, .72);
+  padding: .6mm 1mm;
+  white-space: nowrap;
+}

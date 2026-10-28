@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>JR Motors — евробуклет A4 (ТО), вылет 3 мм</title>
+<!--
+  Eurobooklet / roll fold (евробуклет, «улитка»), A4 landscape.
+  Trim 297×210 mm, bleed 3 mm → page 303×216 mm, 2 pages.
+
+  Page 1 OUTSIDE, left → right:  [ flap 97 ][ back 100 ][ cover 100 ]
+      folds at 97 / 197 mm from the left trim  → page x 100 / 200 mm
+  Page 2 INSIDE,  left → right:  [ 100 ][ 100 ][ fold-in 97 ]
+      folds at 100 / 200 mm from the left trim → page x 103 / 203 mm
+
+  Safe zone: 5 mm from trim, 4 mm each side of a fold (panel padding is 7 mm).
+  @page is 1 mm larger only as a render canvas: build.sh crops to exactly
+  303×216 mm and writes TrimBox/BleedBox.
+  Prices: assets/js/config.js → PRICES (copied 2026-10-28; re-check before reprint).
+-->
+<link rel="stylesheet" href="print-brand.css">
+<style>
+  @page { size: 304mm 217mm; margin: 0; }
+  :root { --sheet-w: 303mm; --sheet-h: 216mm; }
+
+  /* ======================================================================
+     Panels
+     ====================================================================== */
+  .panel {
+    position: absolute;
+    top: 0;
+    height: 216mm;
+    padding: 11mm 7mm;             /* 3 bleed + 8 top/bottom; 7 from folds */
+    display: flex;
+    flex-direction: column;
+  }
+  .panel.edge-l { padding-left: 10mm; }   /* 3 bleed + 7 */
+  .panel.edge-r { padding-right: 10mm; }
+  .panel > * { position: relative; }      /* content above photo layers */
+
+  .p-flap  { left: 0;     width: 100mm; }
+  .p-back  { left: 100mm; width: 100mm; }
+  .p-cover { left: 200mm; width: 103mm; }
+  .p-to    { left: 0;     width: 103mm; }
+  .p-svc   { left: 103mm; width: 100mm; }
+  .p-price { left: 203mm; width: 100mm; }
+
+  /* photo layers: absolutely placed, never part of the flow */
+  /* Outside photo layers use pre-baked RGBA PNGs (tools/bake_photos.py):
+     cropped to the exact layer box, darkened for legibility, and alpha-faded to 0
+     on every non-bleed edge, so they dissolve into the page with no seam.
+     No CSS masks/overlays here: Chrome's PDF output drops masks on <img>, keeps
+     only the outermost of nested masks, and pixel-snaps overlay edges.
+     Layer boxes below MUST match SPECS in tools/bake_photos.py. */
+  .layer { position: absolute !important; }
+  .layer img { width: 100%; height: 100%; object-fit: fill; }
+
+  /* ======================================================================
+     Shared typography
+     ====================================================================== */
+  .ttl { margin-top: 3.6mm; }
+  .ttl text { font-size: 6px; }                       /* 17 pt */
+  .ttl .red { fill: var(--red); }
+
+  .lead {
+    margin-top: 4.4mm;
+    font: 500 8.75pt/1.5 var(--font-body);
+  }
+  .on-dark  .eyebrow, .eyebrow.on-dark  { color: var(--silver-3); }
+  .on-paper .eyebrow, .eyebrow.on-paper { color: var(--ink-text-3); }
+
+  .label {
+    font: 700 7pt/1.2 var(--font-body);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  /* ======================================================================
+     OUTSIDE (dark)
+     ====================================================================== */
+  .out-bg {
+    background:
+      radial-gradient(120mm 90mm at 50% 0%, rgba(255, 255, 255, .045), rgba(255, 255, 255, 0) 70%),
+      linear-gradient(180deg, #111113 0%, #0a0a0b 60%, #080809 100%);
+  }
+  .out-bg::after { opacity: .75; }
+
+  /* ---------------- Flap: Почему JR Motors ------------------------------ */
+  .p-flap { color: var(--silver-2); }
+  .p-flap .lead { color: var(--silver-2); }
+
+  .why { margin-top: 7.4mm; display: grid; gap: 5mm; }
+  .why li {
+    display: grid;
+    grid-template-columns: 12mm 1fr;
+    column-gap: 3mm;
+    align-items: start;
+  }
+  .why-n {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 6.2mm;
+    margin-top: .2mm;
+    font: 700 8pt/1 var(--font-display);
+    color: #fff;
+  }
+  .why-n::before {
+    content: "";
+    position: absolute;
+    inset: 0 .9mm;
+    background: var(--red-grad);
+    transform: skewX(var(--skew));
+    z-index: -1;
+  }
+  .why-n { z-index: 0; isolation: isolate; }
+  .why h3 {
+    font: 800 9.75pt/1.25 var(--font-body);
+    color: var(--silver);
+  }
+  .why p {
+    margin-top: 1.1mm;
+    font: 500 8.5pt/1.45 var(--font-body);
+    color: var(--silver-3);
+  }
+
+  .history { margin-top: auto; }
+  .history .eyebrow { color: var(--silver-2); }
+  .timeline { margin-top: 3.6mm; }
+  .timeline li {
+    display: grid;
+    grid-template-columns: 24mm 1fr;
+    align-items: center;
+    padding: 3.2mm 0;
+    border-top: .25mm solid rgba(214, 214, 220, .22);
+  }
+  .timeline li:last-child { border-bottom: .25mm solid rgba(214, 214, 220, .22); }
+  .timeline .yr text { font-size: 5.29px; }   /* 15 pt */
+  .timeline p {
+    font: 600 8.75pt/1.4 var(--font-body);
+    color: var(--silver);
+  }
+
+  /* 100 × 96 mm; bleeds left + bottom; fades in at the top and towards the fold */
+  .flap-photo { left: 0; width: 100mm; bottom: calc(-1 * var(--os)); height: 96mm; }
+
+  /* ---------------- Back: contacts ------------------------------------- */
+  /* 100 × 104 mm; bleeds top only; fades out at the bottom and towards both folds */
+  .back-photo { left: 0; width: 100mm; top: 0; height: 104mm; }
+  .back-body { margin-top: auto; }
+  .back-phone { margin-top: 5.6mm; }
+  .back-phone text { font-size: 7.06px; }     /* 20 pt */
+  .back-phone-note {
+    margin-top: 2.2mm;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    color: var(--silver-3);
+  }
+  .back-phone-note .ico { width: 3.4mm; height: 3.4mm; color: var(--red-hot); }
+
+  .contacts {
+    margin-top: 6mm;
+    border-top: .25mm solid var(--line-2);
+  }
+  .contacts li {
+    display: grid;
+    grid-template-columns: 4.2mm 21mm 1fr;
+    column-gap: 2.2mm;
+    align-items: center;
+    padding: 2.05mm 0;
+    border-bottom: .25mm solid var(--line);
+  }
+  .contacts .ico { width: 4.2mm; height: 4.2mm; color: var(--red-hot); stroke-width: 1.7; }
+  .contacts .label { color: var(--silver-3); font-size: 7pt; }
+  .contacts .v { font: 700 9.25pt/1.25 var(--font-body); color: var(--silver); }
+
+  .qr-row {
+    margin-top: 6.4mm;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 6mm;
+  }
+  .qr-fig .qr { --qr-pad: 1mm; width: 29mm; }
+  .qr-fig figcaption { margin-top: 2.4mm; }
+  .qr-fig .cap-t { display: block; font: 800 8.75pt/1.25 var(--font-body); color: var(--silver); }
+  .qr-fig .cap-s { display: block; margin-top: .6mm; font: 500 8pt/1.35 var(--font-body); color: var(--silver-3); }
+
+  /* ---------------- Cover --------------------------------------------- */
+  /* 103.6 × 168 mm (incl. overscan); bleeds top + right; fades at the bottom and towards the fold */
+  .cover-photo { left: 0; width: calc(103mm + var(--os)); top: 0; height: 168mm; }
+  /* Logo.png artwork spans 13.2–86.9 % × 18.5–85.5 % of the file.
+     82 mm wide → artwork 60.4 × 27.4 mm, left-aligned to the 7 mm column edge. */
+  .cover-logo {
+    position: absolute !important;
+    left: calc(7mm - 10.8mm);
+    top: calc(14mm - 7.6mm);
+    width: 82mm;
+    height: 41mm;
+  }
+  .cover-copy { margin-top: auto; }
+  .cover-title { margin-top: 4.2mm; }
+  .cover-title text { font-size: 6.7px; }      /* 19 pt */
+  .cover-sub {
+    margin-top: 3.8mm;
+    font: 700 11pt/1.3 var(--font-body);
+    color: var(--silver-2);
+  }
+  .cover-rule {
+    margin-top: 7mm;
+    display: flex;
+    align-items: center;
+    gap: 2.4mm;
+  }
+  .cover-rule .para { --pw: 9mm; --ph: 1.3mm; }
+  .cover-rule i { flex: 1; height: .25mm; background: linear-gradient(90deg, rgba(212, 212, 216, .5), rgba(212, 212, 216, 0)); }
+  .cover-foot {
+    margin-top: 4.4mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .cover-foot .ph {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    font: 600 10.5pt/1 var(--font-display);
+    color: var(--silver);
+    white-space: nowrap;
+  }
+  .cover-foot .ph .ico { width: 3.6mm; height: 3.6mm; color: var(--red-hot); }
+  .cover-foot .ad { font: 600 8pt/1.3 var(--font-body); color: var(--silver-3); text-align: right; }
+
+  /* ======================================================================
+     INSIDE (aluminium paper)
+     ====================================================================== */
+  .in-bg {
+    background:
+      radial-gradient(160mm 110mm at 18% 0%, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 70%),
+      radial-gradient(160mm 120mm at 85% 100%, rgba(205, 205, 212, .35), rgba(205, 205, 212, 0) 70%),
+      linear-gradient(180deg, #f6f6f7 0%, #ededf0 100%);
+  }
+  .on-paper { color: var(--ink-text-2); }
+  .on-paper .lead { color: var(--ink-text-2); }
+
+  /* ---------------- Inside 1: Что входит в ТО ------------------------- */
+  .checklist { margin-top: 6mm; border-top: .25mm solid var(--paper-line); }
+  .checklist li {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    padding: 2.25mm 0;
+    border-bottom: .25mm solid var(--paper-line);
+    font: 700 9.5pt/1.25 var(--font-body);
+    color: var(--ink-text);
+  }
+  .checklist .chk {
+    width: 4.6mm;
+    height: 4.6mm;
+    padding: .7mm;
+    color: #fff;
+    stroke-width: 3.2;
+    background: var(--red);
+    clip-path: polygon(22% 0, 100% 0, 78% 100%, 0 100%);
+  }
+
+  .to-cost {
+    margin-top: 5.4mm;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: .25mm solid var(--paper-line);
+    background: rgba(255, 255, 255, .55);
+  }
+  .to-cost > div { padding: 3mm 3.4mm 3.2mm; }
+  .to-cost > div + div { border-left: .25mm solid var(--paper-line); }
+  .to-cost .label { color: var(--ink-text-3); font-size: 7pt; }
+  .to-cost .v {
+    display: block;
+    margin-top: 1.6mm;
+    font: 700 10.5pt/1 var(--font-display);
+    color: var(--ink-text);
+    white-space: nowrap;
+  }
+  .to-cost .v small { font: 600 8pt/1 var(--font-body); color: var(--ink-text-3); margin-right: .6mm; }
+
+  .steps-card {
+    margin-top: auto;
+    padding: 6mm 6mm 6.4mm;
+    background:
+      radial-gradient(70mm 40mm at 100% 0%, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0) 70%),
+      linear-gradient(160deg, #1b1b1e 0%, #0e0e10 100%);
+    color: var(--silver-2);
+    overflow: hidden;
+  }
+  .steps-card h3 {
+    font: 700 9pt/1.2 var(--font-display);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--silver);
+  }
+  .steps { margin-top: 4.4mm; display: grid; gap: 3.2mm; position: relative; }
+  .steps::before {               /* rail */
+    content: "";
+    position: absolute;
+    left: 3.6mm;
+    top: 3mm;
+    bottom: 3mm;
+    width: .3mm;
+    background: linear-gradient(180deg, var(--red), rgba(214, 4, 4, .15));
+  }
+  .steps li {
+    display: grid;
+    grid-template-columns: 7.2mm 1fr;
+    column-gap: 3.4mm;
+    align-items: center;
+  }
+  .steps .n {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 5.4mm;
+    font: 700 7pt/1 var(--font-display);
+    color: #fff;
+    isolation: isolate;
+  }
+  .steps .n::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--red);
+    transform: skewX(var(--skew));
+    z-index: -1;
+  }
+  .steps b { display: block; font: 800 9pt/1.25 var(--font-body); color: var(--silver); }
+  .steps span { display: block; font: 500 8pt/1.35 var(--font-body); color: var(--silver-3); }
+
+  /* ---------------- Inside 2: Услуги ---------------------------------- */
+  .svc { margin-top: 6mm; }
+  .svc + .svc { margin-top: 7mm; }
+  .svc-photo {
+    height: 47mm;
+    overflow: hidden;
+    clip-path: polygon(11.7mm 0, 100% 0, calc(100% - 11.7mm) 100%, 0 100%);   /* 47 mm × tan 14° */
+    background: var(--graphite);
+  }
+  .svc-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .svc-photo.car img   { object-position: 50% 42%; }
+  .svc-photo.truck img { object-position: 50% 58%; }
+  .svc-h {
+    margin-top: 4mm;
+    display: flex;
+    align-items: center;
+    gap: 2.4mm;
+    font: 700 8.5pt/1.2 var(--font-display);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-text);
+  }
+  .svc-h .ico { width: 6mm; height: 6mm; color: var(--red); stroke-width: 1.6; }
+  .svc-list {
+    margin-top: 2.6mm;
+    display: grid;
+    grid-template-columns: 47.5mm 1fr;
+    grid-template-rows: repeat(3, auto);
+    grid-auto-flow: column;
+    row-gap: 1.5mm;
+    font: 600 8.5pt/1.3 var(--font-body);
+    color: var(--ink-text-2);
+  }
+  .svc-list li { display: flex; align-items: baseline; gap: 2.2mm; white-space: nowrap; }
+  .svc-list li::before {
+    content: "";
+    flex: none;
+    width: 1.6mm;
+    height: 1.1mm;
+    background: var(--red);
+    transform: skewX(var(--skew-steep)) translateY(-.35mm);
+  }
+
+  .svc-mobile {
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: 9mm 1fr;
+    column-gap: 3mm;
+    align-items: center;
+    padding: 3.4mm 0 0;
+    border-top: .25mm solid var(--paper-line);
+  }
+  .svc-mobile .badge {
+    display: grid;
+    place-items: center;
+    height: 9mm;
+    background: var(--ink);
+    color: #fff;
+    clip-path: polygon(2.2mm 0, 100% 0, calc(100% - 2.2mm) 100%, 0 100%);
+  }
+  .svc-mobile .badge .ico { width: 4.6mm; height: 4.6mm; stroke-width: 1.8; }
+  .svc-mobile b { display: block; font: 800 9pt/1.25 var(--font-body); color: var(--ink-text); }
+  .svc-mobile span { display: block; font: 500 8pt/1.35 var(--font-body); color: var(--ink-text-3); }
+
+  /* ---------------- Inside 3: Цены ------------------------------------ */
+  .price-group { margin-top: 5mm; }
+  .price-group + .price-group { margin-top: 5.6mm; }
+  .price-h {
+    display: flex;
+    align-items: center;
+    gap: 2.2mm;
+    padding-bottom: 1.8mm;
+    border-bottom: .5mm solid var(--ink-text);
+    font: 700 8.5pt/1.2 var(--font-display);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-text);
+  }
+  .price-h .ico { width: 5.6mm; height: 5.6mm; color: var(--red); stroke-width: 1.6; }
+  .price { width: 100%; border-collapse: collapse; }
+  .price th, .price td {
+    padding: 1.25mm 0;
+    border-bottom: .25mm solid var(--paper-line);
+    font: 600 8.5pt/1.3 var(--font-body);
+    color: var(--ink-text-2);
+    text-align: left;
+    vertical-align: baseline;
+  }
+  .price td {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 800;
+    color: var(--ink-text);
+    font-variant-numeric: tabular-nums;
+  }
+  .price td small { font-weight: 600; color: var(--ink-text-3); font-size: 8pt; margin-right: .5mm; }
+  .price tr.key th { color: var(--ink-text); font-weight: 800; }
+  .price tr.key th::before {
+    content: "";
+    display: inline-block;
+    width: 1.8mm;
+    height: 1.2mm;
+    margin-right: 1.8mm;
+    background: var(--red);
+    transform: skewX(var(--skew-steep)) translateY(-.3mm);
+  }
+  .price-note {
+    margin-top: 3.4mm;
+    display: flex;
+    gap: 2mm;
+    font: 600 8pt/1.4 var(--font-body);
+    color: var(--ink-text-3);
+  }
+  .price-note::before { content: "*"; color: var(--red); font-weight: 800; }
+
+  /* Red block. The plate is drawn by .mobile::before so it always wraps the copy:
+     it bleeds off the bottom and right edges, and its left edge follows the R slant,
+     anchored 5 mm right of the fold at the bottom (page x 208). */
+  .mobile {
+    margin-top: auto;
+    margin-left: 14mm;             /* text column starts at page x 224 */
+    padding-top: 6.4mm;
+    color: #fff;
+    isolation: isolate;
+  }
+  .mobile::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: calc(-11mm - var(--os));
+    left: -16mm;                   /* = panel x 5 mm */
+    right: calc(-10mm - var(--os));
+    transform-origin: 0 100%;
+    transform: skewX(var(--skew));
+    background:
+      radial-gradient(60mm 40mm at 80% 0%, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 70%),
+      linear-gradient(170deg, #e10a0a 0%, #d60404 45%, #a80303 100%);
+  }
+  .mobile h3 {
+    display: flex;
+    align-items: flex-start;
+    gap: 2.4mm;
+    font: 700 9.5pt/1.25 var(--font-display);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .mobile h3 .ico { width: 5mm; height: 5mm; stroke-width: 1.8; margin-top: -.2mm; }
+  .mobile ul { margin-top: 3.4mm; }
+  .mobile li {
+    display: flex;
+    justify-content: space-between;
+    gap: 2mm;
+    padding: 1.3mm 0;
+    border-bottom: .25mm solid rgba(255, 255, 255, .35);
+    font: 600 8.5pt/1.3 var(--font-body);
+    white-space: nowrap;
+  }
+  .mobile li b { font-weight: 800; }
+  .mobile li small { font-weight: 600; font-size: 8pt; opacity: .85; margin-right: .5mm; }
+  .mobile-call {
+    margin-top: 3.8mm;
+    display: flex;
+    align-items: center;
+    gap: 2.2mm;
+    font: 700 12.5pt/1 var(--font-display);
+    white-space: nowrap;
+  }
+  .mobile-call .ico { width: 4.6mm; height: 4.6mm; stroke-width: 2; }
+</style>
+</head>
+<body>
+
+<!-- sprite: gradients, icons, tenge sign ---------------------------------->
+<svg class="sprite" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#d4d4d8"/><stop offset="1" stop-color="#8a8a90"/>
+    </linearGradient>
+    <linearGradient id="g-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#46464d"/><stop offset=".6" stop-color="#16161a"/><stop offset="1" stop-color="#0a0a0b"/>
+    </linearGradient>
+  </defs>
+  <symbol id="tg" viewBox="0 0 10 12"><path d="M0 0h10v1.8H0zM0 3.5h10v1.8H5.9V12H4.1V5.3H0z"/></symbol>
+  <symbol id="tg-b" viewBox="0 0 10 12"><path d="M0 0h10v2.2H0zM0 3.8h10v2.2H6.1V12H3.9V6H0z"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24">
+    <path d="M3.6 20.4l1.25-4.15A8.6 8.6 0 1 1 7.9 19.3z"/>
+    <path d="M9.1 8.5c.35-.55.9-.55 1.2.05l.65 1.45c.13.3.08.62-.16.86l-.52.52c.62 1.2 1.48 2.06 2.68 2.68l.52-.52c.24-.24.56-.29.86-.16l1.45.65c.6.3.6.85.05 1.2-1 .6-2.25.6-3.65-.15-1.55-.85-2.7-2-3.55-3.55-.75-1.4-.75-2.65-.15-3.65z" stroke-width="1.3"/>
+  </symbol>
+  <symbol id="i-ig" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="18" height="18" rx="5"/>
+    <circle cx="12" cy="12" r="4"/>
+    <circle cx="17.2" cy="6.8" r=".7" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24">
+    <path d="M12 21.6s-7.2-6.1-7.2-11.7a7.2 7.2 0 0 1 14.4 0c0 5.6-7.2 11.7-7.2 11.7z"/>
+    <circle cx="12" cy="9.9" r="2.6"/>
+  </symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9.2"/>
+    <path d="M2.8 12h18.4M12 2.8c2.5 2.6 3.8 5.7 3.8 9.2s-1.3 6.6-3.8 9.2c-2.5-2.6-3.8-5.7-3.8-9.2S9.5 5.4 12 2.8z"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.8l4.4 4.4L19.6 6.5"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24">
+    <path d="M4.4 16.5H2.9a.9.9 0 0 1-.9-.9v-2.7c0-.8.5-1.4 1.2-1.6l2.4-.7 2.4-3.4a2 2 0 0 1 1.6-.8h5.6c.6 0 1.1.3 1.5.7l3 3.4 2.2.5c.8.2 1.3.9 1.3 1.7v2.2a.9.9 0 0 1-.9.9h-1.7"/>
+    <path d="M8.8 16.5h6.4M5.4 11.1h14"/>
+    <circle cx="6.6" cy="16.5" r="2.2"/>
+    <circle cx="17.4" cy="16.5" r="2.2"/>
+  </symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24">
+    <path d="M2 16.3V5.6c0-.5.4-.9.9-.9h10.4c.5 0 .9.4.9.9v10.7"/>
+    <path d="M14.2 8.6h3.9c.4 0 .7.2.9.5l2.6 3.6c.1.2.2.4.2.6v3h-1.6M7.4 16.3h7.8"/>
+    <circle cx="5.2" cy="16.6" r="2"/>
+    <circle cx="17.4" cy="16.6" r="2"/>
+  </symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+  </symbol>
+</svg>
+
+<!-- ======================================================================
+     PAGE 1 — OUTSIDE   [ flap 97 | back 100 | cover 100 ]
+     ====================================================================== -->
+<section class="sheet" data-label="Евробуклет · внешняя сторона" data-w="303" data-h="216" data-bleed="3" data-safe="5" data-folds="100,200" data-fold-safe="4" data-min-pt="7">
+  <div class="artboard">
+    <div class="fill out-bg brushed" aria-hidden="true"></div>
+
+    <!-- ---------- FLAP (folds inside): Почему JR Motors ---------- -->
+    <article class="panel p-flap edge-l on-dark" data-qa-fit>
+      <div class="layer flap-photo" aria-hidden="true"><img src="img/bk-flap.png" alt=""></div>
+
+      <p class="eyebrow">Преимущества</p>
+      <h2 class="ttl">
+        <svg class="mt" viewBox="0 0 83 11.2" style="--w:83mm;--h:11.2mm" role="img" aria-label="Почему JR Motors">
+          <text x="0" y="4.5">ПОЧЕМУ</text><text x="0" y="11.1">JR MOTORS</text>
+        </svg>
+      </h2>
+      <p class="lead">Семейный автосервис в&nbsp;Туркестане. Обслуживаем и&nbsp;ремонтируем легковые и&nbsp;грузовые автомобили.</p>
+
+      <ol class="why">
+        <li><span class="why-n">01</span><div><h3>Опыт с&nbsp;1995 года</h3><p>Работаем с&nbsp;1995 года — дело, которое отец передал сыну.</p></div></li>
+        <li><span class="why-n">02</span><div><h3>Легковые и&nbsp;грузовые</h3><p>Легковые автомобили и&nbsp;грузовая техника — в&nbsp;одном сервисе.</p></div></li>
+        <li><span class="why-n">03</span><div><h3>Честная диагностика</h3><p>Сначала находим причину и&nbsp;называем цену — до&nbsp;начала работ.</p></div></li>
+        <li><span class="why-n">04</span><div><h3>Гарантия на&nbsp;работы и&nbsp;запчасти</h3><p>Отвечаем за&nbsp;выполненные работы и&nbsp;установленные запчасти.</p></div></li>
+      </ol>
+
+      <section class="history">
+        <p class="eyebrow">История</p>
+        <ol class="timeline">
+          <li>
+            <svg class="mt yr" viewBox="0 0 22 4" style="--w:22mm;--h:4mm" role="img" aria-label="1995"><text x="0" y="3.97">1995</text></svg>
+            <p>Камал Набиев открыл&nbsp;СТО</p>
+          </li>
+          <li>
+            <svg class="mt yr" viewBox="0 0 22 4" style="--w:22mm;--h:4mm" role="img" aria-label="2020"><text x="0" y="3.97">2020</text></svg>
+            <p>Сервис возглавил его сын —<br>Жахонгир Расулов</p>
+          </li>
+        </ol>
+      </section>
+    </article>
+
+    <!-- ---------- BACK: contacts ---------- -->
+    <article class="panel p-back on-dark" data-qa-fit>
+      <div class="layer back-photo" aria-hidden="true"><img src="img/bk-back.png" alt=""></div>
+
+      <div class="back-body">
+        <p class="eyebrow">Запись и контакты</p>
+        <h2 class="ttl">
+          <svg class="mt" viewBox="0 0 86 11.2" style="--w:86mm;--h:11.2mm" role="img" aria-label="Запишитесь на ТО">
+            <text x="0" y="4.5">ЗАПИШИТЕСЬ</text><text x="0" y="11.1">НА <tspan class="red">ТО</tspan></text>
+          </svg>
+        </h2>
+
+        <svg class="mt back-phone" viewBox="0 0 86 5.3" style="--w:86mm;--h:5.3mm" role="img" aria-label="8 776 309 61 99"><text x="0" y="5.3">8 776 309 61 99</text></svg>
+        <p class="back-phone-note label"><svg class="ico"><use href="#i-phone"/></svg>Телефон · WhatsApp</p>
+
+        <ul class="contacts">
+          <li><svg class="ico"><use href="#i-wa"/></svg><span class="label">WhatsApp</span><span class="v">+7&nbsp;776&nbsp;309&nbsp;61&nbsp;99</span></li>
+          <li><svg class="ico"><use href="#i-ig"/></svg><span class="label">Instagram</span><span class="v">@joha_0999</span></li>
+          <li><svg class="ico"><use href="#i-pin"/></svg><span class="label">Адрес</span><span class="v">г.&nbsp;Туркестан, ул.&nbsp;Сарайшык,&nbsp;25</span></li>
+          <li><svg class="ico"><use href="#i-globe"/></svg><span class="label">Сайт</span><span class="v">jrmotors.github.io</span></li>
+        </ul>
+
+        <div class="qr-row">
+          <figure class="qr-fig">
+            <div class="qr" data-qa-box><img src="qr-whatsapp.svg" alt="QR-код: запись в WhatsApp"></div>
+            <figcaption><span class="cap-t">Запись в&nbsp;WhatsApp</span><span class="cap-s">Наведите камеру — сообщение уже готово</span></figcaption>
+          </figure>
+          <figure class="qr-fig">
+            <div class="qr" data-qa-box><img src="qr-site.svg" alt="QR-код: сайт jrmotors.github.io"></div>
+            <figcaption><span class="cap-t">Сайт</span><span class="cap-s">jrmotors.github.io</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </article>
+
+    <!-- ---------- COVER ---------- -->
+    <article class="panel p-cover edge-r on-dark" data-qa-fit>
+      <div class="layer cover-photo" aria-hidden="true"><img src="img/bk-cover.png" alt=""></div>
+      <img class="cover-logo" src="../Logo.png" alt="JR Motors — автосервис" data-qa-visible=".132 .185 .869 .855">
+
+      <div class="cover-copy">
+        <p class="eyebrow">С 1995 года · Туркестан</p>
+        <h1 class="cover-title">
+          <svg class="mt" viewBox="0 0 86 12.4" style="--w:86mm;--h:12.4mm" role="img" aria-label="Техническое обслуживание">
+            <text x="0" y="5.03">ТЕХНИЧЕСКОЕ</text><text x="0" y="12.4">ОБСЛУЖИВАНИЕ</text>
+          </svg>
+        </h1>
+        <p class="cover-sub">легковых и&nbsp;грузовых автомобилей</p>
+        <div class="cover-rule" aria-hidden="true"><span class="para"></span><i></i></div>
+        <div class="cover-foot">
+          <span class="ph"><svg class="ico"><use href="#i-phone"/></svg>8&nbsp;776&nbsp;309&nbsp;61&nbsp;99</span>
+          <span class="ad">ул.&nbsp;Сарайшык,&nbsp;25</span>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ======================================================================
+     PAGE 2 — INSIDE   [ 100 | 100 | fold-in 97 ]
+     ====================================================================== -->
+<section class="sheet" data-label="Евробуклет · внутренняя сторона" data-w="303" data-h="216" data-bleed="3" data-safe="5" data-folds="103,203" data-fold-safe="4" data-min-pt="7">
+  <div class="artboard">
+    <div class="fill in-bg" aria-hidden="true"></div>
+
+    <!-- ---------- INSIDE 1: Что входит в ТО ---------- -->
+    <article class="panel p-to edge-l on-paper" data-qa-fit>
+      <p class="eyebrow">Техническое обслуживание</p>
+      <h2 class="ttl">
+        <svg class="mt on-paper" viewBox="0 0 86 11.2" style="--w:86mm;--h:11.2mm" role="img" aria-label="Что входит в ТО">
+          <text x="0" y="4.5">ЧТО ВХОДИТ</text><text x="0" y="11.1">В <tspan class="red">ТО</tspan></text>
+        </svg>
+      </h2>
+      <p class="lead">Плановое обслуживание легковых и&nbsp;грузовых автомобилей. Перед началом работ — диагностика и&nbsp;согласование стоимости.</p>
+
+      <ul class="checklist">
+        <li><svg class="ico chk"><use href="#i-check"/></svg>Замена моторного масла и&nbsp;фильтров</li>
+        <li><svg class="ico chk"><use href="#i-check"/></svg>Проверка и&nbsp;доливка технических жидкостей</li>
+        <li><svg class="ico chk"><use href="#i-check"/></svg>Диагностика тормозной системы</li>
+        <li><svg class="ico chk"><use href="#i-check"/></svg>Осмотр ходовой и&nbsp;рулевого</li>
+        <li><svg class="ico chk"><use href="#i-check"/></svg>Компьютерная диагностика</li>
+        <li><svg class="ico chk"><use href="#i-check"/></svg>Проверка АКБ и&nbsp;электрики</li>
+      </ul>
+
+      <div class="to-cost">
+        <div><span class="label">ТО легковых</span><span class="v"><small>от</small>10&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></span></div>
+        <div><span class="label">ТО грузовых</span><span class="v"><small>от</small>20&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></span></div>
+      </div>
+
+      <section class="steps-card">
+        <h3>Как мы работаем</h3>
+        <ol class="steps">
+          <li><span class="n">01</span><div><b>Заявка</b><span>Звонок или сообщение в&nbsp;WhatsApp</span></div></li>
+          <li><span class="n">02</span><div><b>Диагностика</b><span>Находим причину неисправности</span></div></li>
+          <li><span class="n">03</span><div><b>Согласование стоимости</b><span>Называем цену до&nbsp;начала работ</span></div></li>
+          <li><span class="n">04</span><div><b>Ремонт и&nbsp;гарантия</b><span>Выполняем работы и&nbsp;даём гарантию</span></div></li>
+        </ol>
+      </section>
+    </article>
+
+    <!-- ---------- INSIDE 2: Услуги ---------- -->
+    <article class="panel p-svc on-paper" data-qa-fit>
+      <p class="eyebrow">Легковые и грузовые</p>
+      <h2 class="ttl">
+        <svg class="mt on-paper" viewBox="0 0 86 4.6" style="--w:86mm;--h:4.6mm" role="img" aria-label="Услуги"><text x="0" y="4.5">УСЛУГИ</text></svg>
+      </h2>
+
+      <section class="svc">
+        <figure class="svc-photo car"><img src="../assets/img/svc-maintenance.webp" alt=""></figure>
+        <h3 class="svc-h"><svg class="ico"><use href="#i-car"/></svg>Легковые автомобили</h3>
+        <ul class="svc-list">
+          <li>Компьютерная диагностика</li>
+          <li>ТО и&nbsp;замена масла</li>
+          <li>Ходовая и&nbsp;тормоза</li>
+          <li>Ремонт двигателя</li>
+          <li>Ремонт КПП</li>
+          <li>Автоэлектрика</li>
+        </ul>
+      </section>
+
+      <section class="svc">
+        <figure class="svc-photo truck"><img src="../assets/img/truck-main.webp" alt=""></figure>
+        <h3 class="svc-h"><svg class="ico"><use href="#i-truck"/></svg>Грузовые автомобили</h3>
+        <ul class="svc-list">
+          <li>Пневмосистема и&nbsp;тормоза</li>
+          <li>Компьютерная диагностика</li>
+          <li>ТО и&nbsp;замена масла</li>
+          <li>Дизельные двигатели</li>
+          <li>Ремонт КПП и&nbsp;ходовой</li>
+          <li>Автоэлектрика</li>
+        </ul>
+      </section>
+
+      <div class="svc-mobile">
+        <span class="badge"><svg class="ico"><use href="#i-tool"/></svg></span>
+        <div><b>Выездной ремонт и&nbsp;эвакуатор</b><span>Выездной мастер и&nbsp;эвакуатор по&nbsp;городу</span></div>
+      </div>
+    </article>
+
+    <!-- ---------- INSIDE 3 (fold-in, 97 mm): Цены ---------- -->
+    <article class="panel p-price edge-r on-paper" data-qa-fit>
+
+      <p class="eyebrow">Ориентировочно</p>
+      <h2 class="ttl">
+        <svg class="mt on-paper" viewBox="0 0 83 4.6" style="--w:83mm;--h:4.6mm" role="img" aria-label="Цены"><text x="0" y="4.5">ЦЕНЫ</text></svg>
+      </h2>
+
+      <section class="price-group">
+        <h3 class="price-h"><svg class="ico"><use href="#i-car"/></svg>Легковые</h3>
+        <table class="price">
+          <tr class="key"><th>Техническое обслуживание</th><td><small>от</small>10&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr class="key"><th>Замена масла (работа)</th><td><small>от</small>3&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Компьютерная диагностика</th><td><small>от</small>5&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Диагностика ходовой</th><td><small>от</small>3&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Замена тормозных колодок (ось)</th><td><small>от</small>5&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Ремонт ходовой части</th><td><small>от</small>8&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Автоэлектрика</th><td><small>от</small>5&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Ремонт КПП</th><td><small>от</small>60&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Капитальный ремонт двигателя</th><td><small>от</small>150&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+        </table>
+      </section>
+
+      <section class="price-group">
+        <h3 class="price-h"><svg class="ico"><use href="#i-truck"/></svg>Грузовые</h3>
+        <table class="price">
+          <tr class="key"><th>Техническое обслуживание</th><td><small>от</small>20&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Компьютерная диагностика</th><td><small>от</small>10&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Ремонт пневмосистемы и&nbsp;тормозов</th><td><small>от</small>15&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Ремонт ходовой</th><td><small>от</small>20&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Ремонт КПП</th><td><small>от</small>150&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+          <tr><th>Капитальный ремонт двигателя</th><td><small>от</small>300&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></td></tr>
+        </table>
+      </section>
+
+      <p class="price-note">Цены ориентировочные. Точная стоимость — после диагностики.</p>
+
+      <section class="mobile">
+        <h3><svg class="ico"><use href="#i-tool"/></svg><span>Выездной ремонт<br>и&nbsp;эвакуатор</span></h3>
+        <ul>
+          <li><span>Выездной мастер по&nbsp;городу</span><b><small>от</small>10&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></b></li>
+          <li><span>Эвакуатор (легковой) по&nbsp;городу</span><b><small>от</small>15&nbsp;000<svg class="tg"><use href="#tg-b"/></svg></b></li>
+        </ul>
+        <p class="mobile-call"><svg class="ico"><use href="#i-phone"/></svg>8&nbsp;776&nbsp;309&nbsp;61&nbsp;99</p>
+      </section>
+    </article>
+  </div>
+</section>
+
+<script src="print-tools.js"></script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>JR Motors — визитка 90×50 мм (вылет 2 мм)</title>
+<!--
+  Business card, 2 pages (front, back).
+  Trim 90×50 mm, bleed 2 mm  → page 94×54 mm. Safe zone 4 mm inside the trim.
+  @page is 1 mm larger only as a render canvas: build.sh crops every page to
+  exactly 94×54 mm and writes TrimBox/BleedBox (Chrome rounds page sizes to whole points).
+  Fonts are local static instances of Google Fonts Unbounded + Manrope (see print-brand.css).
+-->
+<link rel="stylesheet" href="print-brand.css">
+<style>
+  @page { size: 95mm 55mm; margin: 0; }
+
+  :root { --sheet-w: 94mm; --sheet-h: 54mm; }
+
+  /* ---------- FRONT ---------------------------------------------------- */
+  .front { background: var(--ink); }
+  .front-bg {
+    background:
+      radial-gradient(44mm 24mm at 50% 45%, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04) 55%, rgba(255, 255, 255, 0) 100%),
+      radial-gradient(70mm 18mm at 50% 108%, rgba(214, 4, 4, .22), rgba(214, 4, 4, 0) 70%),
+      radial-gradient(120mm 70mm at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .55) 100%),
+      linear-gradient(180deg, #151517 0%, #0b0b0c 58%, #070708 100%);
+  }
+  .front-bg::after { background-size: 64mm auto; }
+
+  /* Logo.png is 1774×887; its visible artwork spans 13.2–86.9 % × 18.5–85.5 %.
+     66 mm wide → artwork ≈ 48.6 × 22.1 mm, centred at x 47 / y 25 mm. */
+  .front-logo {
+    position: absolute;
+    left: 14mm;
+    top: 7.9mm;
+    width: 66mm;
+    height: 33mm;
+  }
+
+  /* badge: hairline · red parallelogram · hairline */
+  .front-badge {
+    position: absolute;
+    left: 50%;
+    top: 42.4mm;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 2.2mm;
+  }
+  .front-badge i {
+    display: block;
+    width: 13mm;
+    height: .18mm;
+    background: linear-gradient(90deg, rgba(212, 212, 216, 0), rgba(212, 212, 216, .55));
+  }
+  .front-badge i:last-child { background: linear-gradient(90deg, rgba(212, 212, 216, .55), rgba(212, 212, 216, 0)); }
+  .front-badge .para { --pw: 6mm; --ph: 1.15mm; }
+
+  /* ---------- BACK ----------------------------------------------------- */
+  .back { background: var(--graphite); }
+  .back-bg {
+    background:
+      radial-gradient(60mm 34mm at 8% 0%, rgba(255, 255, 255, .07), rgba(255, 255, 255, 0) 70%),
+      linear-gradient(160deg, #18181b 0%, #101012 55%, #0a0a0b 100%);
+  }
+  .back-bg::after { background-size: 64mm auto; opacity: .8; }
+
+  /* silver plate: left edge follows the R's slant (-14°).
+     Bottom-left corner at x 54.4 mm (y 54.6), top-left at x 68 mm. */
+  .back-plate,
+  .back-stripe {
+    position: absolute;
+    top: 0;
+    bottom: calc(-1 * var(--os));
+    transform-origin: 0 100%;
+    transform: skewX(var(--skew));
+  }
+  .back-plate {
+    left: 54.4mm;
+    width: 54mm;
+    background:
+      radial-gradient(30mm 22mm at 62% 30%, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 70%),
+      linear-gradient(180deg, #f6f6f7 0%, #e1e1e5 48%, #c4c4ca 100%);
+  }
+  .back-stripe {
+    left: 52.3mm;
+    width: 1.3mm;
+    background: var(--red-grad);
+  }
+
+  .back-info {
+    position: absolute;
+    left: 6mm;
+    top: 6.35mm;
+    bottom: 6.2mm;
+    width: 52mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .back-tag {
+    font: 600 6.5pt/1.32 var(--font-body);
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--silver-3);
+  }
+  .back-tag em { font-style: normal; color: var(--silver); }
+  /* 12 pt = 4.233 mm; Unbounded cap height .75 em → baseline at 3.18 mm */
+  .back-phone text { font-size: 4.233px; }
+  .back-phone-note {
+    margin-top: 1.6mm;
+    display: flex;
+    align-items: center;
+    gap: 1.6mm;
+    font: 600 6.5pt/1 var(--font-body);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--silver-3);
+  }
+  .back-phone-note { padding-left: .45mm; }        /* skewed marker stays inside the safe zone */
+  .back-phone-note .para { --pw: 2.2mm; --ph: .9mm; }
+
+  .back-list {
+    display: grid;
+    gap: 1.55mm;
+    font: 600 7pt/1.15 var(--font-body);
+    color: var(--silver-2);
+  }
+  .back-list li { display: flex; align-items: center; gap: 1.8mm; white-space: nowrap; }
+  .back-list .ico { width: 2.9mm; height: 2.9mm; color: var(--red-hot); stroke-width: 1.9; }
+  .back-list b { font-weight: 700; color: var(--silver); }
+
+  .back-qr {
+    position: absolute;
+    right: 6mm;
+    top: 14.8mm;
+    width: 20.6mm;
+  }
+  .back-qr .qr {
+    --qr-pad: .7mm;
+    box-shadow: 0 .5mm 1.6mm rgba(20, 20, 24, .28), 0 0 0 .15mm rgba(20, 20, 24, .12);
+  }
+  .back-qr figcaption {
+    margin-top: 1.4mm;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1.2mm;
+    font: 800 6.5pt/1 var(--font-body);
+    color: var(--ink-text);
+    white-space: nowrap;
+  }
+  .back-qr figcaption .ico { width: 2.6mm; height: 2.6mm; color: var(--red); stroke-width: 2; }
+</style>
+</head>
+<body>
+
+<!-- icon sprite ------------------------------------------------------------>
+<svg class="sprite" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#d4d4d8"/><stop offset="1" stop-color="#8a8a90"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-wa" viewBox="0 0 24 24">
+    <path d="M3.6 20.4l1.25-4.15A8.6 8.6 0 1 1 7.9 19.3z"/>
+    <path d="M9.1 8.5c.35-.55.9-.55 1.2.05l.65 1.45c.13.3.08.62-.16.86l-.52.52c.62 1.2 1.48 2.06 2.68 2.68l.52-.52c.24-.24.56-.29.86-.16l1.45.65c.6.3.6.85.05 1.2-1 .6-2.25.6-3.65-.15-1.55-.85-2.7-2-3.55-3.55-.75-1.4-.75-2.65-.15-3.65z" stroke-width="1.3"/>
+  </symbol>
+  <symbol id="i-ig" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="18" height="18" rx="5"/>
+    <circle cx="12" cy="12" r="4"/>
+    <circle cx="17.2" cy="6.8" r=".7" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24">
+    <path d="M12 21.6s-7.2-6.1-7.2-11.7a7.2 7.2 0 0 1 14.4 0c0 5.6-7.2 11.7-7.2 11.7z"/>
+    <circle cx="12" cy="9.9" r="2.6"/>
+  </symbol>
+</svg>
+
+<!-- ======================= FRONT ======================================= -->
+<section class="sheet front" data-label="Визитка · лицевая" data-w="94" data-h="54" data-bleed="2" data-safe="4" data-min-pt="6.5">
+  <div class="artboard">
+    <div class="fill front-bg brushed" aria-hidden="true"></div>
+    <img class="front-logo" src="../Logo.png" alt="JR Motors — автосервис" data-qa-visible=".132 .185 .869 .855">
+    <div class="front-badge" aria-hidden="true" data-qa-box><i></i><span class="para"></span><i></i></div>
+  </div>
+</section>
+
+<!-- ======================= BACK ======================================== -->
+<section class="sheet back" data-label="Визитка · оборот" data-w="94" data-h="54" data-bleed="2" data-safe="4" data-min-pt="6.5">
+  <div class="artboard">
+    <div class="fill back-bg brushed" aria-hidden="true"></div>
+    <div class="back-plate" aria-hidden="true"></div>
+    <div class="back-stripe" aria-hidden="true"></div>
+
+    <div class="back-info">
+      <p class="back-tag">Автосервис легковых и&nbsp;грузовых автомобилей · <em>с&nbsp;1995&nbsp;года</em></p>
+
+      <div class="back-call">
+        <svg class="mt back-phone" viewBox="0 0 44 3.2" style="--w:44mm;--h:3.2mm" role="img" aria-label="8 776 309 61 99"><text x="0" y="3.18">8 776 309 61 99</text></svg>
+        <p class="back-phone-note"><span class="para"></span>Телефон · WhatsApp</p>
+      </div>
+
+      <ul class="back-list">
+        <li><svg class="ico"><use href="#i-pin"/></svg><span>г.&nbsp;Туркестан, ул.&nbsp;Сарайшык,&nbsp;25</span></li>
+        <li><svg class="ico"><use href="#i-wa"/></svg><span><b>WhatsApp</b> +7&nbsp;776&nbsp;309&nbsp;61&nbsp;99</span></li>
+        <li><svg class="ico"><use href="#i-ig"/></svg><span>@joha_0999</span></li>
+      </ul>
+    </div>
+
+    <figure class="back-qr">
+      <div class="qr" data-qa-box><img src="qr-whatsapp.svg" alt="QR-код: запись в WhatsApp"></div>
+      <figcaption><svg class="ico"><use href="#i-wa"/></svg>Запись в WhatsApp</figcaption>
+    </figure>
+  </div>
+</section>
+
+<script src="print-tools.js"></script>
+</body>
+</html>
